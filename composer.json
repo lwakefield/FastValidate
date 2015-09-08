@@ -1,0 +1,28 @@
+{
+    "name": "lawrence/fast-validate",
+    "type": "library",
+    "keywords": ["laravel", "framework", "validation"],
+    "description": "Validate even faster!",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Lawrence Wakefield",
+            "email": "lawrence@iamlawrence.me"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "illuminate/database": "5.*",
+        "illuminate/http": "5.*"
+    },
+    "require-dev": {
+        "laravel/laravel": "5.*",
+        "codeception/codeception": "2.*",
+        "lawrence/fast-migrate": "master-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "FastValidate\\": "src/FastValidate/"
+        }
+    }
+}
