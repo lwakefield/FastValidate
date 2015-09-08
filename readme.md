@@ -6,7 +6,7 @@ FastValidate requires Laravel >= 5.0
 
 ## Installation
 
-To install, simply `composer require lawrence/fast-validate:dev-master`
+To install, simply `composer require lawrence/fast-validate:1.0`
 
 ## Example
 
