@@ -38,8 +38,9 @@ abstract class BaseModel extends Model
 
     protected function validate()
     {
+        $messages = empty($this->messages) ? [] : $this->messages;
         if (isset($this->rules)) {
-            $validator = Validator::make($this->getProposedAttributes(), $this->rules);
+            $validator = Validator::make($this->getProposedAttributes(), $this->rules, $messages);
             if ($validator->fails()) {
                 throw new ValidationException('Error validating model', $validator->errors());
             }

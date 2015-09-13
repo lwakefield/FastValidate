@@ -53,6 +53,21 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         }
         $this->notSeeInDatabase('users', $data);
     }
+
+    public function testCustomValidationMessage()
+    {
+        $model = new User;
+        $custom_message = 'You have got to choose a first name!';
+        $model->messages = [
+            'first_name.required' => $custom_message
+        ];
+        try {
+            $model->save();
+        } catch(ValidationException $e) {
+            $has_custom_message = in_array($custom_message, $e->errors->get('first_name'));
+            $this->assertTrue($has_custom_message);
+        }
+    }
     
 }
 
