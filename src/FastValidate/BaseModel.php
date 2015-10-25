@@ -9,6 +9,8 @@ use Validator;
 abstract class BaseModel extends Model
 {
 
+    protected $auto_populate = true;
+
     public function __construct(array $attributes = []) {
         parent::__construct($attributes);
 
@@ -17,13 +19,29 @@ abstract class BaseModel extends Model
         }
     }
 
+    public function saveDontPopulate()
+    {
+        return $this->save(false);
+    }
+
+    public function save($populate = true)
+    {
+        $last_populate = $populate;
+        $this->auto_populate = $populate;
+        $result = parent::save();
+        $this->auto_populate = $last_populate;
+        return $result;
+    }
+
     public static function boot()
     {
         parent::boot();
 
         static::saving(function (BaseModel $model) {
             $model->validate();
-            $model->populate();
+            if ($model->auto_populate) {
+                $model->populate();
+            }
         });
     }
 
@@ -49,7 +67,10 @@ abstract class BaseModel extends Model
 
     protected function getProposedAttributes()
     {
-        return array_merge($this->getAttributes(), Input::all());
+
+        return $this->auto_populate ? 
+            array_merge($this->getAttributes(), Input::all()) :
+            $this->getAttributes();
     }
 }
 

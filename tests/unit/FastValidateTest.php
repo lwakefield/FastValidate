@@ -68,7 +68,30 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
             $this->assertTrue($has_custom_message);
         }
     }
+
+    public function testSaveDontPopulate()
+    {
+        Input::merge(['last_name' => 'Doe']);
+        $model = new User;
+        $model->first_name = 'Joe';
+        $model->saveDontPopulate();
+        $this->assertEquals($model->first_name, 'Joe');
+        $this->assertNotEquals($model->last_name, 'Doe');
+    }
     
+    public function testRevertsAfterSaveDontPopulate()
+    {
+        Input::merge(['last_name' => 'Doe']);
+        $model = new User;
+        $model->first_name = 'Joe';
+        $model->saveDontPopulate();
+        $data = ['first_name' => 'Johnny', 'last_name' => 'Doe'];
+        Input::merge($data);
+        $model->save();
+        $this->assertEquals($model->first_name, 'Johnny');
+        $this->assertEquals($model->last_name, 'Doe');
+    }
+
 }
 
 class User extends FastValidate\BaseModel
