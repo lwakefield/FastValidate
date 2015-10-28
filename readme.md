@@ -89,10 +89,11 @@ We can do this with a form like shown below:
 
 Which produces the following data:
 
-```json
-    {
-        'name' : ['Johnnie', 'Tommie'],
-        'email': ['john@theinternet.com', 'tommie@theinternet.com'],
-        'password': ['correcthorsebatterystaple', 'Tr0ub4dor&3']
-    }
+```php
+<?php
+[
+    'name' : ['Johnnie', 'Tommie'],
+    'email': ['john@theinternet.com', 'tommie@theinternet.com'],
+    'password': ['correcthorsebatterystaple', 'Tr0ub4dor&3']
+]
 ```
