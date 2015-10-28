@@ -21,9 +21,10 @@ abstract class BaseModel extends Model
 
     public function saveFromInput()
     {
-        $this->auto_populate = true;
+        assert(!static::inputIntendedForMany());
+        $input = static::getRelevantInput();
+        $this->populateFromArray($input);
         $this->save();
-        $this->auto_populate = false;
         return $this;
     }
 
@@ -32,39 +33,56 @@ abstract class BaseModel extends Model
         if (static::inputIntendedForMany()) {
             return static::createMany();
         }
-        $model = static::getInstance();
+        $model = static::getNewInstance();
         $model->saveFromInput();
         return $model;
     }
 
     private static function inputIntendedForMany()
     {
-        $instance = static::getInstance();
-        $instance->auto_populate = true;
-        $input = $instance->getProposedAttributes();
+        $input = static::getRelevantInput();
         return is_array(head($input));
+    }
+
+    private static function getRelevantInput()
+    {
+        $input = [];
+        $this_class_name = strtolower(class_basename(get_called_class()));
+        foreach (Input::all() as $key => $val) {
+            if (starts_with($key, $this_class_name.'_')) {
+                $new_key = str_replace($this_class_name.'_', '', $key);
+                $input[$new_key] = $val;
+            } else if (starts_with($key, $this_class_name.'.')) {
+                $new_key = str_replace($this_class_name.'.', '', $key);
+                $input[$new_key] = $val;
+            }
+        }
+        return $input;
     }
 
     public static function createMany()
     {
-        $instance = static::getInstance();
+        $instance = static::getNewInstance();
         $instance->auto_populate = true;
-        $input = $instance->getProposedAttributes();
-        $count = static::countExpectedModels($input);
+        $input = static::getRelevantInput();
+        $count = static::countExpectedModelsFromInput($input);
         $models = [];
         for ($i = 0; $i < $count; $i++) {
             $data = [];
             foreach($input as $key => $val) {
                 $data[$key] = $val[$i];
             }
-            $models[] = static::createFromAttributes($data);
+            $model = static::getNewInstance();
+            $model->populateFromArray($data);
+            $model->save();
+            $models[] = $model;
         }
         return $models;
     }
 
     private static function createFromAttributes($attributes)
     {
-        $model = static::getInstance();
+        $model = static::getNewInstance();
         foreach ($attributes as $key => $val) {
             $model->setAttribute($key, $val);
         }
@@ -72,7 +90,7 @@ abstract class BaseModel extends Model
         return $model;
     }
 
-    private static function countExpectedModels($input) {
+    private static function countExpectedModelsFromInput($input) {
         $keys = array_keys($input);
         for ($i = 0; $i < count($keys); $i++) {
             for ($j = $i; $j < count($keys); $j++) {
@@ -82,7 +100,7 @@ abstract class BaseModel extends Model
         return count(head($input));
     }
 
-    private static function getInstance()
+    private static function getNewInstance()
     {
         $class_name = get_called_class();
         return new $class_name;
@@ -94,11 +112,6 @@ abstract class BaseModel extends Model
 
         static::saving(function (BaseModel $model) {
             $model->validate();
-            if ($model->auto_populate) {
-                $model->populateFromArray(
-                    $model->getProposedAttributes()
-                );
-            }
         });
     }
 
@@ -115,38 +128,12 @@ abstract class BaseModel extends Model
     {
         $messages = empty($this->messages) ? [] : $this->messages;
         if (isset($this->rules)) {
-            $validator = Validator::make($this->getProposedAttributes(), $this->rules, $messages);
+            $validator = Validator::make($this->getAttributes(), $this->rules, $messages);
             if ($validator->fails()) {
                 throw new ValidationException('Error validating model', $validator->errors());
             }
         }
     }
 
-    protected function getProposedAttributes()
-    {
-        return $this->getRelevantInput(
-            $this->auto_populate ? 
-            array_merge($this->getAttributes(), Input::all()) : 
-            $this->getAttributes()
-        );
-    }
-
-    protected function getRelevantInput($attributes)
-    {
-        $input = [];
-        $this_class_name = strtolower(class_basename(get_class($this)));
-        foreach ($attributes as $key => $val) {
-            if (starts_with($key, $this_class_name.'_')) {
-                $new_key = str_replace($this_class_name.'_', '', $key);
-                $input[$new_key] = $val;
-            } else if (starts_with($key, $this_class_name.'.')) {
-                $new_key = str_replace($this_class_name.'.', '', $key);
-                $input[$new_key] = $val;
-            } else if (!$this->auto_populate) {
-                $input[$key] = $val;
-            }
-        }
-        return $input;
-    }
 }
 
