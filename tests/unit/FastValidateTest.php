@@ -37,7 +37,7 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $data = ['user.first_name' => 'Johnny', 'user.last_name' => 'Doe'];
         Input::merge($data);
         $model = new User;
-        $model->save();
+        $model->saveFromInput();
         $this->seeInDatabase('users', ['first_name' => 'Johnny', 'last_name' => 'Doe']);
     }
 
@@ -46,7 +46,7 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $data = ['user.last_name' => 'Doe'];
         Input::merge($data);
         try {
-            User::create();
+            User::createFromInput();
         } catch(ValidationException $e) {
             $this->assertTrue($e->errors->has('first_name'));
         }
@@ -61,7 +61,7 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
             'first_name.required' => $custom_message
         ];
         try {
-            $model->save();
+            $model->saveFromInput();
         } catch(ValidationException $e) {
             $has_custom_message = in_array($custom_message, $e->errors->get('first_name'));
             $this->assertTrue($has_custom_message);
@@ -72,7 +72,7 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
     {
         $data = ['user.first_name' => 'Johnnie', 'user.last_name' => 'Doe'];
         Input::merge($data);
-        $model = User::create();
+        $model = User::createFromInput();
         $this->seeInDatabase('users', ['first_name' => 'Johnnie', 'last_name' => 'Doe']);
     }
 
@@ -80,18 +80,9 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
     {
         $data = ['user.first_name' => ['Johnnie', 'Tommie'], 'user.last_name' => ['Doe', 'Moe']];
         Input::merge($data);
-        $models = User::create();
+        $models = User::createFromInput();
         $this->seeInDatabase('users', ['first_name' => 'Johnnie', 'last_name' => 'Doe']);
         $this->seeInDatabase('users', ['first_name' => 'Tommie', 'last_name' => 'Moe']);
-    }
-
-    public function testCreateWithAttributes()
-    {
-        $overide_data = ['user.first_name' => 'Johnnie', 'user.last_name' => 'Doe'];
-        Input::merge($overide_data);
-        $data = ['first_name' => 'Tommie', 'last_name' => 'Moe'];
-        $model = User::create($data);
-        $this->seeInDatabase('users', $data);
     }
 
 }

@@ -9,7 +9,7 @@ use Validator;
 abstract class BaseModel extends Model
 {
 
-    protected $auto_populate = true;
+    protected $auto_populate = false;
 
     public function __construct(array $attributes = []) {
         parent::__construct($attributes);
@@ -19,7 +19,15 @@ abstract class BaseModel extends Model
         }
     }
 
-    public static function create(array $attributes = [])
+    public function saveFromInput()
+    {
+        $this->auto_populate = true;
+        $this->save();
+        $this->auto_populate = false;
+        return $this;
+    }
+
+    public static function createFromInput()
     {
         if (!empty($attributes)) {
             return static::createFromAttributes($attributes);
@@ -27,7 +35,9 @@ abstract class BaseModel extends Model
         if (static::inputIntendedForMany()) {
             return static::createMany();
         }
-        return parent::create();
+        $model = static::getInstance();
+        $model->saveFromInput();
+        return $model;
     }
 
     private static function inputIntendedForMany()
@@ -56,12 +66,10 @@ abstract class BaseModel extends Model
     private static function createFromAttributes($attributes)
     {
         $model = static::getInstance();
-        foreach($attributes as $key => $val) {
+        foreach ($attributes as $key => $val) {
             $model->setAttribute($key, $val);
         }
-        $model->auto_populate = false;
         $model->save();
-        $model->auto_populate = true;
         return $model;
     }
 
@@ -127,10 +135,13 @@ abstract class BaseModel extends Model
         $input = [];
         $this_class_name = strtolower(class_basename(get_class($this)));
         foreach ($attributes as $key => $val) {
-            if (starts_with($key, $this_class_name.'.')) {
+            $new_key = '';
+            if (starts_with($key, $this_class_name.'_')) {
+                $new_key = str_replace($this_class_name.'_', '', $key);
+            } else if (starts_with($key, $this_class_name.'.')) {
                 $new_key = str_replace($this_class_name.'.', '', $key);
-                $input[$new_key] = $val;
             }
+            $input[$new_key] = $val;
         }
         return $input;
     }

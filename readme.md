@@ -47,11 +47,11 @@ Below is an example of how we can use the User class.
 
 // Creating a new model
 $user = new User;
-$user->save();
+$user->saveFromInput();
 
 // Updating a model
 $user = User::where('name', '=', 'Super User')->firstOrFail();
-$user->save();
+$user->saveFromInput();
 ```
 
 The magic comes from hooking into the _saving_ event hook. When a model is begin saved, it will be grab all relevant input from the Request, validate the input, then populate the model with the input. If the input is not valid, a ValidationException will be thrown, which contains a MessageBag full of the validation errors.
@@ -96,4 +96,11 @@ Which produces the following data:
     'email': ['john@theinternet.com', 'tommie@theinternet.com'],
     'password': ['correcthorsebatterystaple', 'Tr0ub4dor&3']
 ]
+```
+
+And then let the magic happen!
+
+``php
+<?php
+$users = User::createFromInput();
 ```
