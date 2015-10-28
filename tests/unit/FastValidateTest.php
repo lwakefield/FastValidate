@@ -32,7 +32,7 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
             amReadyForMigration();
     }
 
-    public function testSavesCorrectly()
+    public function testSaveFromInput()
     {
         $data = ['user.first_name' => 'Johnny', 'user.last_name' => 'Doe'];
         Input::merge($data);

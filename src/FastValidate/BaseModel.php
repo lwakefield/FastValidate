@@ -17,13 +17,13 @@ abstract class BaseModel extends Model
         }
     }
 
-    public function saveFromInput()
+    public static function boot()
     {
-        assert(!static::inputIntendedForMany());
-        $input = static::getRelevantInput();
-        $this->populateFromArray($input);
-        $this->save();
-        return $this;
+        parent::boot();
+
+        static::saving(function (BaseModel $model) {
+            $model->validate();
+        });
     }
 
     public static function createFromInput()
@@ -99,13 +99,13 @@ abstract class BaseModel extends Model
         return new $class_name;
     }
 
-    public static function boot()
+    public function saveFromInput()
     {
-        parent::boot();
-
-        static::saving(function (BaseModel $model) {
-            $model->validate();
-        });
+        assert(!static::inputIntendedForMany());
+        $input = static::getRelevantInput();
+        $this->populateFromArray($input);
+        $this->save();
+        return $this;
     }
 
     protected function populateFromArray($attributes)
