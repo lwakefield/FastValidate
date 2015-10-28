@@ -19,29 +19,30 @@ abstract class BaseModel extends Model
         }
     }
 
-    public static function create($attributes = [])
+    public static function create()
     {
-        $class_name = get_called_class();
-        $instance = new $class_name;
-        $input = $instance->getRelevantInput(Input::all());
-        $input_intended_for_many = is_array(head($input));
-        if ($input_intended_for_many) {
+        if (static::inputIntendedForMany()) {
             return static::createMany();
         }
         return parent::create();
     }
 
+    private static function inputIntendedForMany()
+    {
+        $instance = static::getInstance();
+        $input = $instance->getProposedAttributes();
+        return is_array(head($input));
+    }
+
     public static function createMany()
     {
-        $class_name = get_called_class();
-        $instance = new $class_name;
-        $input = $instance->getRelevantInput(Input::all());
+        $instance = static::getInstance();
+        $input = $instance->getProposedAttributes();
         $keys = array_keys($input);
         $count = $instance->countExpectedModels($input);
         $models = [];
         for ($i = 0; $i < $count; $i++) {
-            $data = [];
-            $model = new $class_name;
+            $model = static::getInstance();
             foreach ($keys as $key) {
                 $model->setAttribute($key, $input[$key][$i]);
             }
@@ -51,6 +52,12 @@ abstract class BaseModel extends Model
             $models[] = $model;
         }
         return $models;
+    }
+
+    private static function getInstance()
+    {
+        $class_name = get_called_class();
+        return new $class_name;
     }
 
     private function countExpectedModels($input) {
@@ -71,7 +78,7 @@ abstract class BaseModel extends Model
             $model->validate();
             if ($model->auto_populate) {
                 $model->populateFromArray(
-                    $model->getRelevantInput(Input::all())
+                    $model->getProposedAttributes()
                 );
             }
         });
