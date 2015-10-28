@@ -70,13 +70,20 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
 
     public function testCreate()
     {
+        $data = ['first_name' => 'Johnnie', 'last_name' => 'Doe'];
+        $model = User::create($data);
+        $this->seeInDatabase('users', $data);
+    }
+
+    public function testCreateFromInput()
+    {
         $data = ['user.first_name' => 'Johnnie', 'user.last_name' => 'Doe'];
         Input::merge($data);
         $model = User::createFromInput();
         $this->seeInDatabase('users', ['first_name' => 'Johnnie', 'last_name' => 'Doe']);
     }
 
-    public function testCreateMany()
+    public function testCreateManyFromInput()
     {
         $data = ['user.first_name' => ['Johnnie', 'Tommie'], 'user.last_name' => ['Doe', 'Moe']];
         Input::merge($data);

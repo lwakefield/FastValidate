@@ -29,9 +29,6 @@ abstract class BaseModel extends Model
 
     public static function createFromInput()
     {
-        if (!empty($attributes)) {
-            return static::createFromAttributes($attributes);
-        }
         if (static::inputIntendedForMany()) {
             return static::createMany();
         }
@@ -43,6 +40,7 @@ abstract class BaseModel extends Model
     private static function inputIntendedForMany()
     {
         $instance = static::getInstance();
+        $instance->auto_populate = true;
         $input = $instance->getProposedAttributes();
         return is_array(head($input));
     }
@@ -50,6 +48,7 @@ abstract class BaseModel extends Model
     public static function createMany()
     {
         $instance = static::getInstance();
+        $instance->auto_populate = true;
         $input = $instance->getProposedAttributes();
         $count = static::countExpectedModels($input);
         $models = [];
@@ -126,7 +125,9 @@ abstract class BaseModel extends Model
     protected function getProposedAttributes()
     {
         return $this->getRelevantInput(
-            array_merge($this->getAttributes(), Input::all())
+            $this->auto_populate ? 
+            array_merge($this->getAttributes(), Input::all()) : 
+            $this->getAttributes()
         );
     }
 
@@ -135,14 +136,14 @@ abstract class BaseModel extends Model
         $input = [];
         $this_class_name = strtolower(class_basename(get_class($this)));
         foreach ($attributes as $key => $val) {
-            $new_key = '';
             if (starts_with($key, $this_class_name.'_')) {
                 $new_key = str_replace($this_class_name.'_', '', $key);
+                $input[$new_key] = $val;
             } else if (starts_with($key, $this_class_name.'.')) {
                 $new_key = str_replace($this_class_name.'.', '', $key);
-            }
-            if (!empty($new_key)) {
                 $input[$new_key] = $val;
+            } else if (!$this->auto_populate) {
+                $input[$key] = $val;
             }
         }
         return $input;
