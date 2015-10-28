@@ -100,6 +100,15 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $this->seeInDatabase('users', $data);
     }
 
+    public function testCreateWithAttributes()
+    {
+        $overide_data = ['first_name' => 'Johnnie', 'last_name' => 'Doe'];
+        Input::merge($overide_data);
+        $data = ['first_name' => 'Tommie', 'last_name' => 'Moe'];
+        $model = User::create($data);
+        $this->seeInDatabase('users', $data);
+    }
+
 }
 
 class User extends FastValidate\BaseModel

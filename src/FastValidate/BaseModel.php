@@ -19,16 +19,18 @@ abstract class BaseModel extends Model
         }
     }
 
-    //public static function create($attributes = [])
-    //{
-        //if (!empty($attributes)) {
-            //return parent::create($attributes);
-        //}
-        //$class_name = get_called_class();
-        //$instance = new $class_name;
-        //$instance->save();
-        //return $instance;
-    //}
+    public static function create($attributes = [])
+    {
+        $class_name = get_called_class();
+        $instance = new $class_name;
+        if (empty($attributes)) {
+            $instance->save();
+            return $instance;
+        }
+        $instance->populateFromArray($attributes);
+        $instance->saveDontPopulate();
+        return $instance;
+    }
 
     public function saveDontPopulate()
     {
@@ -51,14 +53,14 @@ abstract class BaseModel extends Model
         static::saving(function (BaseModel $model) {
             $model->validate();
             if ($model->auto_populate) {
-                $model->populate();
+                $model->populateFromArray(Input::all());
             }
         });
     }
 
-    protected function populate()
+    protected function populateFromArray($attributes)
     {
-        foreach (Input::all() as $key => $val) {
+        foreach ($attributes as $key => $val) {
             if (in_array($key, $this->fillable)) {
                 $this->setAttribute($key, $val);
             }
