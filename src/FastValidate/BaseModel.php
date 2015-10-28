@@ -19,6 +19,17 @@ abstract class BaseModel extends Model
         }
     }
 
+    //public static function create($attributes = [])
+    //{
+        //if (!empty($attributes)) {
+            //return parent::create($attributes);
+        //}
+        //$class_name = get_called_class();
+        //$instance = new $class_name;
+        //$instance->save();
+        //return $instance;
+    //}
+
     public function saveDontPopulate()
     {
         return $this->save(false);

@@ -92,6 +92,14 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $this->assertEquals($model->last_name, 'Doe');
     }
 
+    public function testCreate()
+    {
+        $data = ['first_name' => 'Johnnie', 'last_name' => 'Doe'];
+        Input::merge($data);
+        $model = User::create();
+        $this->seeInDatabase('users', $data);
+    }
+
 }
 
 class User extends FastValidate\BaseModel
