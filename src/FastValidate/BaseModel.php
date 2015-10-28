@@ -19,8 +19,11 @@ abstract class BaseModel extends Model
         }
     }
 
-    public static function create()
+    public static function create($attributes = [])
     {
+        if (!empty($attributes)) {
+            return static::createFromAttributes($attributes);
+        }
         if (static::inputIntendedForMany()) {
             return static::createMany();
         }
