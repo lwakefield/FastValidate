@@ -38,29 +38,31 @@ abstract class BaseModel extends Model
     {
         $instance = static::getInstance();
         $input = $instance->getProposedAttributes();
-        $keys = array_keys($input);
-        $count = $instance->countExpectedModels($input);
+        $count = static::countExpectedModels($input);
         $models = [];
         for ($i = 0; $i < $count; $i++) {
-            $model = static::getInstance();
-            foreach ($keys as $key) {
-                $model->setAttribute($key, $input[$key][$i]);
+            $data = [];
+            foreach($input as $key => $val) {
+                $data[$key] = $val[$i];
             }
-            $model->auto_populate = false;
-            $model->save();
-            $model->auto_populate = true;
-            $models[] = $model;
+            $models[] = static::createFromAttributes($data);
         }
         return $models;
     }
 
-    private static function getInstance()
+    private static function createFromAttributes($attributes)
     {
-        $class_name = get_called_class();
-        return new $class_name;
+        $model = static::getInstance();
+        foreach($attributes as $key => $val) {
+            $model->setAttribute($key, $val);
+        }
+        $model->auto_populate = false;
+        $model->save();
+        $model->auto_populate = true;
+        return $model;
     }
 
-    private function countExpectedModels($input) {
+    private static function countExpectedModels($input) {
         $keys = array_keys($input);
         for ($i = 0; $i < count($keys); $i++) {
             for ($j = $i; $j < count($keys); $j++) {
@@ -68,6 +70,12 @@ abstract class BaseModel extends Model
             }
         }
         return count(head($input));
+    }
+
+    private static function getInstance()
+    {
+        $class_name = get_called_class();
+        return new $class_name;
     }
 
     public static function boot()
