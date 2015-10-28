@@ -9,8 +9,6 @@ use Validator;
 abstract class BaseModel extends Model
 {
 
-    protected $auto_populate = false;
-
     public function __construct(array $attributes = []) {
         parent::__construct($attributes);
 
@@ -72,10 +70,7 @@ abstract class BaseModel extends Model
             foreach($input as $key => $val) {
                 $data[$key] = $val[$i];
             }
-            $model = static::getNewInstance();
-            $model->populateFromArray($data);
-            $model->save();
-            $models[] = $model;
+            $models[] = static::createFromAttributes($data);
         }
         return $models;
     }
@@ -83,9 +78,7 @@ abstract class BaseModel extends Model
     private static function createFromAttributes($attributes)
     {
         $model = static::getNewInstance();
-        foreach ($attributes as $key => $val) {
-            $model->setAttribute($key, $val);
-        }
+        $model->populateFromArray($attributes);
         $model->save();
         return $model;
     }
