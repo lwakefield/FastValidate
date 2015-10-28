@@ -23,27 +23,44 @@ abstract class BaseModel extends Model
     {
         $class_name = get_called_class();
         $instance = new $class_name;
-        if (empty($attributes)) {
-            $instance->save();
-            return $instance;
+        $input = $instance->getRelevantInput(Input::all());
+        $input_intended_for_many = is_array(head($input));
+        if ($input_intended_for_many) {
+            return static::createMany();
         }
-        $instance->populateFromArray($attributes);
-        $instance->saveDontPopulate();
-        return $instance;
+        return parent::create();
     }
 
-    public function saveDontPopulate()
+    public static function createMany()
     {
-        return $this->save(false);
+        $class_name = get_called_class();
+        $instance = new $class_name;
+        $input = $instance->getRelevantInput(Input::all());
+        $keys = array_keys($input);
+        $count = $instance->countExpectedModels($input);
+        $models = [];
+        for ($i = 0; $i < $count; $i++) {
+            $data = [];
+            $model = new $class_name;
+            foreach ($keys as $key) {
+                $model->setAttribute($key, $input[$key][$i]);
+            }
+            $model->auto_populate = false;
+            $model->save();
+            $model->auto_populate = true;
+            $models[] = $model;
+        }
+        return $models;
     }
 
-    public function save($populate = true)
-    {
-        $last_populate = $populate;
-        $this->auto_populate = $populate;
-        $result = parent::save();
-        $this->auto_populate = $last_populate;
-        return $result;
+    private function countExpectedModels($input) {
+        $keys = array_keys($input);
+        for ($i = 0; $i < count($keys); $i++) {
+            for ($j = $i; $j < count($keys); $j++) {
+                assert(count($input[$keys[$i]]) == count($input[$keys[$j]]));
+            }
+        }
+        return count(head($input));
     }
 
     public static function boot()
@@ -53,7 +70,9 @@ abstract class BaseModel extends Model
         static::saving(function (BaseModel $model) {
             $model->validate();
             if ($model->auto_populate) {
-                $model->populateFromArray(Input::all());
+                $model->populateFromArray(
+                    $model->getRelevantInput(Input::all())
+                );
             }
         });
     }
@@ -80,10 +99,22 @@ abstract class BaseModel extends Model
 
     protected function getProposedAttributes()
     {
+        return $this->getRelevantInput(
+            array_merge($this->getAttributes(), Input::all())
+        );
+    }
 
-        return $this->auto_populate ? 
-            array_merge($this->getAttributes(), Input::all()) :
-            $this->getAttributes();
+    protected function getRelevantInput($attributes)
+    {
+        $input = [];
+        $this_class_name = strtolower(get_class($this));
+        foreach ($attributes as $key => $val) {
+            if (starts_with($key, $this_class_name.'.')) {
+                $new_key = str_replace($this_class_name.'.', '', $key);
+                $input[$new_key] = $val;
+            }
+        }
+        return $input;
     }
 }
 
