@@ -125,7 +125,7 @@ abstract class BaseModel extends Model
     protected function getRelevantInput($attributes)
     {
         $input = [];
-        $this_class_name = strtolower(get_class($this));
+        $this_class_name = strtolower(class_basename(get_class($this)));
         foreach ($attributes as $key => $val) {
             if (starts_with($key, $this_class_name.'.')) {
                 $new_key = str_replace($this_class_name.'.', '', $key);
