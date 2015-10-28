@@ -19,7 +19,7 @@ abstract class BaseModel extends Model
         }
     }
 
-    public static function create($attributes = [])
+    public static function create(array $attributes = [])
     {
         if (!empty($attributes)) {
             return static::createFromAttributes($attributes);
