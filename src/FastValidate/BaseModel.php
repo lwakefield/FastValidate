@@ -141,7 +141,9 @@ abstract class BaseModel extends Model
             } else if (starts_with($key, $this_class_name.'.')) {
                 $new_key = str_replace($this_class_name.'.', '', $key);
             }
-            $input[$new_key] = $val;
+            if (!empty($new_key)) {
+                $input[$new_key] = $val;
+            }
         }
         return $input;
     }
