@@ -46,6 +46,9 @@ abstract class BaseModel extends Model
     {
         $input = [];
         $this_class_name = strtolower(class_basename(get_called_class()));
+        if (Input::ajax()) {
+            return Input::get($this_class_name);
+        }
         foreach (Input::all() as $key => $val) {
             if (starts_with($key, $this_class_name.'_')) {
                 $new_key = str_replace($this_class_name.'_', '', $key);
@@ -60,8 +63,13 @@ abstract class BaseModel extends Model
 
     public static function createMany()
     {
-        $instance = static::getNewInstance();
-        $instance->auto_populate = true;
+        return Input::ajax() ?
+            static::createManyFromAjaxInput() :
+            static::createManyFromFormInput();
+    }
+
+    private static function createManyFromFormInput()
+    {
         $input = static::getRelevantInput();
         $count = static::countExpectedModelsFromInput($input);
         $models = [];
@@ -71,6 +79,16 @@ abstract class BaseModel extends Model
                 $data[$key] = $val[$i];
             }
             $models[] = static::createFromAttributes($data);
+        }
+        return $models;
+    }
+
+    private static function createManyFromAjaxInput()
+    {
+        $input = static::getRelevantInput();
+        $models = [];
+        foreach ($input as $i) {
+            $models[] = static::createFromAttributes($i);
         }
         return $models;
     }

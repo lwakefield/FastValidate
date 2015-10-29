@@ -32,6 +32,11 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
             amReadyForMigration();
     }
 
+    public function setInputToAjax()
+    {
+        Input::instance()->headers->set('X-Requested-With', 'XMLHttpRequest');
+    }
+
     public function testSaveFromInput()
     {
         $data = ['user.first_name' => 'Johnny', 'user.last_name' => 'Doe'];
@@ -91,6 +96,39 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $this->seeInDatabase('users', ['first_name' => 'Johnnie', 'last_name' => 'Doe']);
         $this->seeInDatabase('users', ['first_name' => 'Tommie', 'last_name' => 'Moe']);
     }
+
+    public function testSaveFromAjax()
+    {
+        $this->setInputToAjax();
+        $data = ['user' => ['first_name' => 'Johnny', 'last_name' => 'Doe']];
+        Input::merge($data);
+        $model = new User;
+        $model->saveFromInput();
+        $this->seeInDatabase('users', ['first_name' => 'Johnny', 'last_name' => 'Doe']);
+    }
+
+    public function testCreateFromAjax()
+    {
+        $this->setInputToAjax();
+        $data = ['user' => ['first_name' => 'Johnny', 'last_name' => 'Doe']];
+        Input::merge($data);
+        User::createFromInput();
+        $this->seeInDatabase('users', ['first_name' => 'Johnny', 'last_name' => 'Doe']);
+    }
+
+    public function testCreateManyFromAjax()
+    {
+        $this->setInputToAjax();
+        $data = ['user' => [
+            ['first_name' => 'Johnny', 'last_name' => 'Doe'],
+            ['first_name' => 'Tommie', 'last_name' => 'Moe']
+        ]];
+        Input::merge($data);
+        $models = User::createFromInput();
+        $this->seeInDatabase('users', ['first_name' => 'Johnny', 'last_name' => 'Doe']);
+        $this->seeInDatabase('users', ['first_name' => 'Tommie', 'last_name' => 'Moe']);
+    }
+
 
 }
 
