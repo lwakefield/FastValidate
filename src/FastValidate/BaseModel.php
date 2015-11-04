@@ -30,9 +30,7 @@ abstract class BaseModel extends Model
     public static function createFromInput()
     {
         if (static::inputIntendedForMany()) {
-            return Input::ajax() ?
-                static::createManyFromAjaxInput() :
-                static::createManyFromFormInput();
+            return static::createManyFromInput();
         }
         $model = static::getNewInstance();
         $model->saveFromInput();
@@ -55,22 +53,7 @@ abstract class BaseModel extends Model
         return FormInput::getInputForClass($this_class_name);
     }
 
-    private static function createManyFromFormInput()
-    {
-        $input = static::getRelevantInput();
-        $count = static::countExpectedModelsFromInput($input);
-        $models = [];
-        for ($i = 0; $i < $count; $i++) {
-            $data = [];
-            foreach($input as $key => $val) {
-                $data[$key] = $val[$i];
-            }
-            $models[] = static::createFromAttributes($data);
-        }
-        return $models;
-    }
-
-    private static function createManyFromAjaxInput()
+    private static function createManyFromInput()
     {
         $input = static::getRelevantInput();
         $models = [];
@@ -85,16 +68,6 @@ abstract class BaseModel extends Model
         $model = static::getNewInstance();
         $model->saveWithAttributes($attributes);
         return $model;
-    }
-
-    private static function countExpectedModelsFromInput($input) {
-        $keys = array_keys($input);
-        for ($i = 0; $i < count($keys); $i++) {
-            for ($j = $i; $j < count($keys); $j++) {
-                assert(count($input[$keys[$i]]) == count($input[$keys[$j]]));
-            }
-        }
-        return count(head($input));
     }
 
     private static function getNewInstance()
