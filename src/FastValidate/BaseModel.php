@@ -2,6 +2,7 @@
 namespace FastValidate;
 
 use Illuminate\Database\Eloquent\Model;
+use FastValidate\Input\FormInput;
 
 use Input;
 use Validator;
@@ -51,16 +52,7 @@ abstract class BaseModel extends Model
         if (Input::ajax()) {
             return Input::get($this_class_name);
         }
-        foreach (Input::all() as $key => $val) {
-            if (starts_with($key, $this_class_name.'_')) {
-                $new_key = str_replace($this_class_name.'_', '', $key);
-                $input[$new_key] = $val;
-            } else if (starts_with($key, $this_class_name.'.')) {
-                $new_key = str_replace($this_class_name.'.', '', $key);
-                $input[$new_key] = $val;
-            }
-        }
-        return $input;
+        return FormInput::getInputForClass($this_class_name);
     }
 
     private static function createManyFromFormInput()
@@ -91,8 +83,7 @@ abstract class BaseModel extends Model
     private static function createFromAttributes($attributes)
     {
         $model = static::getNewInstance();
-        $model->populateFromArray($attributes);
-        $model->save();
+        $model->saveWithAttributes($attributes);
         return $model;
     }
 
@@ -112,6 +103,16 @@ abstract class BaseModel extends Model
         return new $class_name;
     }
 
+    private static function attributesHaveRelations($attrs)
+    {
+        return !empty(static::getRelationsFromAttributes($attrs));
+    }
+
+    private static function inputHasRelations()
+    {
+        return !empty(static::getRelationsFromInput());
+    }
+
     private static function getRelationsFromInput()
     {
         $input = static::getRelevantInput();
@@ -129,11 +130,6 @@ abstract class BaseModel extends Model
             }
         }
         return $relations;
-    }
-
-    private static function inputHasRelations()
-    {
-        return !empty(static::getRelationsFromInput());
     }
 
     public function saveFromInput()
