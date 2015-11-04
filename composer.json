@@ -13,12 +13,12 @@
     "require": {
         "php": ">=5.4.0",
         "illuminate/database": "5.*",
-        "illuminate/http": "5.*"
+        "illuminate/http": "5.*",
+        "lawrence/fast-migrate": "^1.2"
     },
     "require-dev": {
         "laravel/laravel": "5.*",
-        "codeception/codeception": "2.*",
-        "lawrence/fast-migrate": "master-dev"
+        "codeception/codeception": "2.*"
     },
     "autoload": {
         "psr-4": {

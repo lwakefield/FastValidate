@@ -28,8 +28,17 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
 
         $I = $this->getMockForAbstractClass('FastMigrate\FastMigrator');
         $I->wantATable('users')->
-            withStrings('first_name', 'last_name')->
-            amReadyForMigration();
+            withStrings('first_name', 'last_name');
+        $I->wantATable('roles')->
+            withStrings('title');
+        $I->wantATable('profiles')->
+            withStrings('title');
+        $I->wantATable('posts')->
+            withStrings('title', 'content');
+        $I->want('users')->belongsTo('roles');
+        $I->want('users')->toHaveOne('profiles');
+        $I->want('users')->toHaveMany('posts');
+        $I->amReadyForMigration();
     }
 
     public function setInputToAjax()
@@ -129,6 +138,48 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $this->seeInDatabase('users', ['first_name' => 'Tommie', 'last_name' => 'Moe']);
     }
 
+    public function testCreateWithBelongsToRelationFromAjax()
+    {
+        $this->setInputToAjax();
+        $data = ['user' => [
+            'first_name' => 'Johnny',
+            'role' => ['title' => 'admin']
+        ]];
+        Input::merge($data);
+        $model = User::createFromInput();
+        $this->seeInDatabase('users', ['first_name' => 'Johnny']);
+        $this->seeInDatabase('roles', ['title' => 'admin']);
+    }
+
+    public function testCreateWithHasOneRelationFromAjax()
+    {
+        $this->setInputToAjax();
+        $data = ['user' => [
+            'first_name' => 'Johnny',
+            'profile' => ['title' => 'my profile']
+        ]];
+        Input::merge($data);
+        $model = User::createFromInput();
+        $this->seeInDatabase('users', ['first_name' => 'Johnny']);
+        $this->seeInDatabase('profiles', ['title' => 'my profile']);
+    }
+
+    public function testCreateWithHasManyRelationFromAjax()
+    {
+        $this->setInputToAjax();
+        $data = ['user' => [
+            'first_name' => 'Johnny',
+            'posts' => [
+                ['title' => 'post 1'],
+                ['title' => 'post 2'],
+            ]
+        ]];
+        Input::merge($data);
+        $model = User::createFromInput();
+        $this->seeInDatabase('users', ['first_name' => 'Johnny']);
+        $this->seeInDatabase('posts', ['title' => 'post 1']);
+        $this->seeInDatabase('posts', ['title' => 'post 2']);
+    }
 
 }
 
@@ -139,4 +190,28 @@ class User extends FastValidate\BaseModel
         'first_name' => 'required',
         'last_name' => ''
     ];
+    public function role()
+    {
+        return $this->belongsTo('Role');
+    }
+    public function profile()
+    {
+        return $this->hasOne('Profile');
+    }
+    public function posts()
+    {
+        return $this->hasMany('Post');
+    }
+}
+class Profile extends FastValidate\BaseModel
+{
+    protected $fillable = ['title'];
+}
+class Role extends FastValidate\BaseModel
+{
+    protected $fillable = ['title'];
+}
+class Post extends FastValidate\BaseModel
+{
+    protected $fillable = ['title'];
 }
