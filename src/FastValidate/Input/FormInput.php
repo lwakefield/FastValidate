@@ -21,7 +21,12 @@ class FormInput
 
     private static function inputIntendedForMany($input)
     {
-        return is_array(head($input));
+        foreach ($input as $key => $val) {
+            if (is_array($val)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function restructureForMany($input) {

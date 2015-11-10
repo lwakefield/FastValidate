@@ -43,16 +43,6 @@ abstract class BaseModel extends Model
         return is_array(head($input));
     }
 
-    private static function getRelevantInput()
-    {
-        $input = [];
-        $this_class_name = strtolower(class_basename(get_called_class()));
-        if (Input::ajax()) {
-            return Input::get($this_class_name);
-        }
-        return FormInput::getInputForClass($this_class_name);
-    }
-
     private static function createManyFromInput()
     {
         $input = static::getRelevantInput();
@@ -105,6 +95,17 @@ abstract class BaseModel extends Model
         return $relations;
     }
 
+    private static function getRelevantInput()
+    {
+        $input = [];
+        $this_class_name = strtolower(class_basename(get_called_class()));
+        if (Input::ajax()) {
+            return Input::get($this_class_name);
+        }
+        return FormInput::getInputForClass($this_class_name);
+    }
+
+
     public function saveFromInput()
     {
         assert(!static::inputIntendedForMany());
@@ -112,7 +113,8 @@ abstract class BaseModel extends Model
         $this->saveWithAttributes(static::getRelevantInput());
 
         $has_relations = static::inputHasRelations();
-        if ($has_relations) {
+        $is_ajax = Input::ajax();
+        if ($has_relations && $is_ajax) {
             foreach (static::getRelationsFromInput() as $key => $val) {
                 $relation = $this->$key();
                 if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\BelongsTo')) {
@@ -122,7 +124,8 @@ abstract class BaseModel extends Model
                     $model = $relation->create($val);
                 } else if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\HasMany')) {
                     foreach ($val as $attrs) {
-                        $relation->create($attrs);
+                        $model = $relation->getRelated()->createFromAttributes($attrs);
+                        $relation->save($model);
                     }
                 }
             }
