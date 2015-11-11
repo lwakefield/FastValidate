@@ -29,34 +29,33 @@ abstract class BaseModel extends Model
 
     public static function createFromInput()
     {
+        return static::processFromInput('create');
+    }
+
+    public static function updateFromInput()
+    {
+        return static::processFromInput('update');
+    }
+
+    private static function processFromInput($type = 'create')
+    {
         $input = static::getRelevantInput();
         if (static::inputIntendedForMany()) {
             $models = [];
             foreach ($input as $attrs) {
                 $model = static::getNewInstance();
+                if ($type == 'update') {
+                    $model = $model->find($attrs['id']);
+                }
                 $model->saveWithAttributes($attrs);
                 $models[] = $model;
             }
             return $models;
         }
         $model = static::getNewInstance();
-        $model->saveFromInput();
-        return $model;
-    }
-
-    public static function updateFromInput()
-    {
-        $input = static::getRelevantInput();
-        if (static::inputIntendedForMany()) {
-            $models = [];
-            foreach ($input as $attrs) {
-                $model = static::getNewInstance()->find($attrs['id']);
-                $model->saveWithAttributes($attrs);
-                $models[] = $model;
-            }
-            return $models;
+        if ($type == 'update') {
+            $model = $model->find($input['id']);
         }
-        $model = static::getNewInstance()->find($input['id']);
         $model->saveFromInput();
         return $model;
     }
