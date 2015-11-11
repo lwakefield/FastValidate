@@ -27,24 +27,19 @@ abstract class BaseModel extends Model
         });
     }
 
-    public static function createFromInput()
-    {
-        return static::processFromInput('create');
-    }
-
     public static function updateFromInput()
     {
-        return static::processFromInput('update');
+        return static::createFromInput();
     }
 
-    private static function processFromInput($type = 'create')
+    public static function createFromInput()
     {
         $input = static::getRelevantInput();
         if (static::inputIntendedForMany()) {
             $models = [];
             foreach ($input as $attrs) {
                 $model = static::getNewInstance();
-                if ($type == 'update') {
+                if (array_key_exists('id', $attrs)) {
                     $model = $model->find($attrs['id']);
                 }
                 $model->saveWithAttributes($attrs);
@@ -53,7 +48,7 @@ abstract class BaseModel extends Model
             return $models;
         }
         $model = static::getNewInstance();
-        if ($type == 'update') {
+        if (array_key_exists('id', $input)) {
             $model = $model->find($input['id']);
         }
         $model->saveFromInput();
@@ -133,7 +128,6 @@ abstract class BaseModel extends Model
         $this->saveWithAttributes(static::getRelevantInput());
         return $this;
     }
-
 
     private function saveWithAttributes($attrs)
     {
