@@ -205,6 +205,37 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $this->seeInDatabase('users', ['id' => $models[1]->id, 'first_name' => 'Youseeks']);
     }
 
+    public function testUpdateWithHasManyRelationFromAjax()
+    {
+        $this->setInputToAjax();
+        $data = ['user' => [
+            'first_name' => 'Johnny',
+            'posts' => [
+                ['title' => 'post 1'],
+                ['title' => 'post 2'],
+            ]
+        ]];
+        Input::merge($data);
+        $model = User::createFromInput();
+        $model->load('posts');
+
+
+        $data = ['user' => [
+            'id' => $model->id,
+            'first_name' => 'Tommie',
+            'posts' => [
+                ['id' => $model->posts[0]->id, 'title' => 'updated post 1'],
+                ['id' => $model->posts[1]->id, 'title' => 'updated post 2'],
+            ]
+        ]];
+        Input::merge($data);
+        $model = User::updateFromInput();
+        $model->load('posts');
+        $this->seeInDatabase('users', ['id' => $model->id, 'first_name' => 'Tommie']);
+        $this->seeInDatabase('posts', ['id' => $model->posts[0]->id, 'title' => 'updated post 1']);
+        $this->seeInDatabase('posts', ['id' => $model->posts[1]->id, 'title' => 'updated post 2']);
+    }
+
 }
 
 class User extends FastValidate\BaseModel
