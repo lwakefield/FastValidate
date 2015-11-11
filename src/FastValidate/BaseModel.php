@@ -134,25 +134,29 @@ abstract class BaseModel extends Model
 
         $this->saveWithAttributes(static::getRelevantInput());
 
-        $has_relations = static::inputHasRelations();
-        $is_ajax = Input::ajax();
-        if ($has_relations && $is_ajax) {
-            foreach (static::getRelationsFromInput() as $key => $val) {
-                $relation = $this->$key();
-                if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\BelongsTo')) {
-                    $model = $relation->getRelated()->createFromAttributes($val);
-                    $relation->associate($model);
-                } else if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\HasOne')) {
-                    $model = $relation->create($val);
-                } else if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\HasMany')) {
-                    foreach ($val as $attrs) {
-                        $model = $relation->getRelated()->createFromAttributes($attrs);
-                        $relation->save($model);
-                    }
+        $this->saveRelationsFromInput();
+        return $this;
+    }
+
+    private function saveRelationsFromInput()
+    {
+        if (!static::inputHasRelations() || !Input::ajax()) {
+            return;
+        }
+        foreach (static::getRelationsFromInput() as $key => $val) {
+            $relation = $this->$key();
+            if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\BelongsTo')) {
+                $model = $relation->getRelated()->createFromAttributes($val);
+                $relation->associate($model);
+            } else if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\HasOne')) {
+                $model = $relation->create($val);
+            } else if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\HasMany')) {
+                foreach ($val as $attrs) {
+                    $model = $relation->getRelated()->createFromAttributes($attrs);
+                    $relation->save($model);
                 }
             }
         }
-        return $this;
     }
 
     private function saveWithAttributes($attrs)
