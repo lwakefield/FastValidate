@@ -39,8 +39,16 @@ abstract class BaseModel extends Model
 
     private static function inputIntendedForMany()
     {
-        $input = static::getRelevantInput();
-        return is_array(head($input));
+        $relations = static::getRelationsFromInput();
+        $input = array_filter(static::getRelevantInput(), function($val) use ($relations) {
+            return !in_array($val, $relations);
+        });
+        foreach ($input as $val) {
+            if (is_array($val)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static function createManyFromInput()
