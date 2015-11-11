@@ -29,8 +29,15 @@ abstract class BaseModel extends Model
 
     public static function createFromInput()
     {
+        $input = static::getRelevantInput();
         if (static::inputIntendedForMany()) {
-            return static::createManyFromInput();
+            $models = [];
+            foreach ($input as $attrs) {
+                $model = static::getNewInstance();
+                $model->saveWithAttributes($attrs);
+                $models[] = $model;
+            }
+            return $models;
         }
         $model = static::getNewInstance();
         $model->saveFromInput();
@@ -66,16 +73,6 @@ abstract class BaseModel extends Model
             }
         }
         return false;
-    }
-
-    private static function createManyFromInput()
-    {
-        $input = static::getRelevantInput();
-        $models = [];
-        foreach ($input as $i) {
-            $models[] = static::createFromAttributes($i);
-        }
-        return $models;
     }
 
     private static function createFromAttributes($attributes)
