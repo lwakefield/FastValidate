@@ -38,21 +38,11 @@ abstract class BaseModel extends Model
         if (static::inputIntendedForMany()) {
             $models = [];
             foreach ($input as $attrs) {
-                $model = static::getNewInstance();
-                if (array_key_exists('id', $attrs)) {
-                    $model = $model->find($attrs['id']);
-                }
-                $model->saveWithAttributes($attrs);
-                $models[] = $model;
+                $models[] = static::createFromAttributes($attrs);
             }
             return $models;
         }
-        $model = static::getNewInstance();
-        if (array_key_exists('id', $input)) {
-            $model = $model->find($input['id']);
-        }
-        $model->saveFromInput();
-        return $model;
+        return static::createFromAttributes($input);
     }
 
     private static function inputIntendedForMany()
@@ -72,6 +62,9 @@ abstract class BaseModel extends Model
     private static function createFromAttributes($attributes)
     {
         $model = static::getNewInstance();
+        if (array_key_exists('id', $attributes)) {
+            $model = $model->find($attributes['id']);
+        }
         $model->saveWithAttributes($attributes);
         return $model;
     }
