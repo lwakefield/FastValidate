@@ -42,12 +42,12 @@ abstract class BaseModel extends Model
         $input = static::getRelevantInput();
         if (static::inputIntendedForMany()) {
             $models = [];
-            foreach ($input as $i) {
-                $model = static::getNewInstance()->find($i['id']);
-                $model->saveFromInput();
+            foreach ($input as $attrs) {
+                $model = static::getNewInstance()->find($attrs['id']);
+                $model->saveWithAttributes($attrs);
                 $models[] = $model;
             }
-            return static::createManyFromInput();
+            return $models;
         }
         $model = static::getNewInstance()->find($input['id']);
         $model->saveFromInput();

@@ -185,12 +185,24 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
     {
         $data = ['first_name' => 'Johnnie', 'last_name' => 'Doe'];
         $model = User::create($data);
-        $id = $model->id;
 
-        $data = ['user.id' => $id, 'user.first_name' => 'Tommie'];
+        $data = ['user.id' => $model->id, 'user.first_name' => 'Tommie'];
         Input::merge($data);
-        $model = User::updateFromInput();
-        $this->seeInDatabase('users', ['id' => $id, 'first_name' => 'Tommie']);
+        User::updateFromInput();
+        $this->seeInDatabase('users', ['id' => $model->id, 'first_name' => 'Tommie']);
+    }
+
+    public function testUpdateManyFromInput()
+    {
+        $data = ['user.first_name' => ['Johnnie', 'Tommie'], 'user.last_name' => ['Doe', 'Moe']];
+        Input::merge($data);
+        $models = User::createFromInput();
+
+        $data = ['user.id' => [$models[0]->id, $models[1]->id], 'user.first_name' => ['Meseeks', 'Youseeks']];
+        Input::merge($data);
+        User::updateFromInput();
+        $this->seeInDatabase('users', ['id' => $models[0]->id, 'first_name' => 'Meseeks']);
+        $this->seeInDatabase('users', ['id' => $models[1]->id, 'first_name' => 'Youseeks']);
     }
 
 }
