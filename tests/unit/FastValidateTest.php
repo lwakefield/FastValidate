@@ -181,6 +181,18 @@ class FastValidateTest extends Illuminate\Foundation\Testing\TestCase
         $this->seeInDatabase('posts', ['title' => 'post 2']);
     }
 
+    public function testUpdateFromInput()
+    {
+        $data = ['first_name' => 'Johnnie', 'last_name' => 'Doe'];
+        $model = User::create($data);
+        $id = $model->id;
+
+        $data = ['user.id' => $id, 'user.first_name' => 'Tommie'];
+        Input::merge($data);
+        $model = User::updateFromInput();
+        $this->seeInDatabase('users', ['id' => $id, 'first_name' => 'Tommie']);
+    }
+
 }
 
 class User extends FastValidate\BaseModel

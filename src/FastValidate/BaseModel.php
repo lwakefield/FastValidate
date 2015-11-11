@@ -37,6 +37,23 @@ abstract class BaseModel extends Model
         return $model;
     }
 
+    public static function updateFromInput()
+    {
+        $input = static::getRelevantInput();
+        if (static::inputIntendedForMany()) {
+            $models = [];
+            foreach ($input as $i) {
+                $model = static::getNewInstance()->find($i['id']);
+                $model->saveFromInput();
+                $models[] = $model;
+            }
+            return static::createManyFromInput();
+        }
+        $model = static::getNewInstance()->find($input['id']);
+        $model->saveFromInput();
+        return $model;
+    }
+
     private static function inputIntendedForMany()
     {
         $relations = static::getRelationsFromInput();
