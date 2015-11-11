@@ -130,19 +130,24 @@ abstract class BaseModel extends Model
     public function saveFromInput()
     {
         assert(!static::inputIntendedForMany());
-
         $this->saveWithAttributes(static::getRelevantInput());
-
-        $this->saveRelationsFromInput();
         return $this;
     }
 
-    private function saveRelationsFromInput()
+
+    private function saveWithAttributes($attrs)
     {
-        if (!static::inputHasRelations() || !Input::ajax()) {
+        $this->populateFromArray($attrs);
+        $this->save();
+        $this->saveRelations(static::getRelationsFromAttributes($attrs));
+    }
+
+    private function saveRelations($attrs)
+    {
+        if (!Input::ajax()) {
             return;
         }
-        foreach (static::getRelationsFromInput() as $key => $val) {
+        foreach ($attrs as $key => $val) {
             $relation = $this->$key();
             if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\BelongsTo')) {
                 $model = $relation->getRelated()->createFromAttributes($val);
@@ -156,12 +161,6 @@ abstract class BaseModel extends Model
                 }
             }
         }
-    }
-
-    private function saveWithAttributes($attrs)
-    {
-        $this->populateFromArray($attrs);
-        $this->save();
     }
 
     protected function populateFromArray($attributes)
