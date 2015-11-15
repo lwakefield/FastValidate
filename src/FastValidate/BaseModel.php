@@ -29,7 +29,15 @@ abstract class BaseModel extends Model
 
     public static function updateFromInput()
     {
-        return static::createFromInput();
+        $input = static::getRelevantInput();
+        if (static::inputIntendedForMany()) {
+            $models = [];
+            foreach ($input as $attrs) {
+                $models[] = static::updateFromAttributes($attrs);
+            }
+            return $models;
+        }
+        return static::updateFromAttributes($input);
     }
 
     public static function createFromInput()
@@ -62,10 +70,15 @@ abstract class BaseModel extends Model
     private static function createFromAttributes($attributes)
     {
         $model = static::getNewInstance();
-        if (array_key_exists('id', $attributes)) {
-            $model = $model->find($attributes['id']);
-        }
         $model->saveWithAttributes($attributes);
+        return $model;
+    }
+
+    private static function updateFromAttributes($attributes)
+    {
+        $model = static::getNewInstance();
+        $model = $model->find($attributes['id']);
+        $model->saveWithAttributes($attributes, true);
         return $model;
     }
 
@@ -122,14 +135,16 @@ abstract class BaseModel extends Model
         return $this;
     }
 
-    private function saveWithAttributes($attrs)
+    private function saveWithAttributes($attrs, $update = false)
     {
         $this->populateFromArray($attrs);
         $this->save();
-        $this->saveRelations(static::getRelationsFromAttributes($attrs));
+        $this->saveRelations(
+            static::getRelationsFromAttributes($attrs),
+            $update);
     }
 
-    private function saveRelations($attrs)
+    private function saveRelations($attrs, $update = false)
     {
         if (!Input::ajax()) {
             return;
@@ -137,13 +152,19 @@ abstract class BaseModel extends Model
         foreach ($attrs as $key => $val) {
             $relation = $this->$key();
             if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\BelongsTo')) {
-                $model = $relation->getRelated()->createFromAttributes($val);
+                $model = $update ? 
+                    $relation->getRelated()->updateFromAttributes($val) :
+                    $relation->getRelated()->createFromAttributes($val);
                 $relation->associate($model);
             } else if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\HasOne')) {
-                $model = $relation->create($val);
+                $model = $update ?
+                    $relation->getRelated()->updateFromAttributes($val) :
+                    $relation->create($val);
             } else if (is_a($relation, 'Illuminate\Database\Eloquent\Relations\HasMany')) {
                 foreach ($val as $attrs) {
-                    $model = $relation->getRelated()->createFromAttributes($attrs);
+                    $model = $update ?
+                        $relation->getRelated()->updateFromAttributes($attrs) :
+                        $relation->getRelated()->createFromAttributes($attrs);
                     $relation->save($model);
                 }
             }
